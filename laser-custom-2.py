@@ -15,7 +15,7 @@ root.configure(bg='#B8BBBF')
 # กําหนดค่าการเชื่อมต่อ Telnet
 global telnet_ip
 telnet_ip = tk.StringVar()
-telnet_ip.set("10.49.234.235")  # กำหนดค่าเริ่มต้น IP Address
+telnet_ip.set("127.0.0.1")  # กำหนดค่าเริ่มต้น IP Address
 global telnet_port
 telnet_port = tk.StringVar()
 telnet_port.set("23")  # กำหนดค่าเริ่มต้น Port
@@ -52,7 +52,8 @@ def telnet_login(host, port, username):
         tn.write(username.encode('ascii') + b"\r\n")
         response = tn.read_until(b"$LOGIN OK: ", timeout=1)
         print("Telnet Connection: OK")
-        terminal.insert(tk.END, current_time + ": " + "Telnet Connection: OK" + '\n')
+        received_data = response.decode("utf-8").strip()
+        terminal.insert(tk.END, current_time+": "+received_data + '\n')
         terminal.see(tk.END)
     except Exception as e:
         print("Telnet Connection: Error:", e)
@@ -76,18 +77,40 @@ def telnet_relogin():
 
 # ส่งคำสั่งไป Laser
 def telnet_send(command):
-    try:
-        current_time = str(datetime.now().strftime("%H:%M:%S"))
-        tn.write(command.encode('ascii') + b"\r\n")
-        response = tn.read_until(b"OK", timeout=1)
-        print("Command sent:", command)
-        terminal.insert(tk.END, current_time + ": " + "Command sent: " + command + '\n')
+    current_time = str(datetime.now().strftime("%H:%M:%S"))
+    if (command == "MANUAL"):
+        command = str(command_entry.get())
+    elif(command == "DFREQ"):
+        command = command+" "+str(frequency_entry.get())
+    elif(command == "QSDELAY"):
+        command = command+" "+str(qsdelay_entry.get())
+    '''
+    elif(command == "DCURR"):
+        command = command+" "+str(current_entry.get())
+    '''
+
+    command = "$"+str(command)+"\r\n"
+    tn.write(command.encode())
+    response = tn.read_until(b"\r ", timeout=1)
+    received_data = response.decode("utf-8").strip()
+
+
+    if(received_data == "$LOGOUT"):
+        print("LOGOUT")
+        tn.close()
+
+    terminal.insert(tk.END, current_time+": "+received_data + '\n')
+    terminal.see(tk.END)
+
+    '''
+    if(received_data == received_data+" Requires Login"): #ยังไม่ทดสอบ
+        print("Relogin")
+        tn.close()
+        telnet_relogin()
+    else:
+        terminal.insert(tk.END, current_time+": "+received_data + '\n')
         terminal.see(tk.END)
-        received_data = response.decode("utf-8").strip()
-        return received_data
-    except Exception as e:
-        print("Error sending command:", e)
-        return None
+    '''
 
 # ฟังก์ชันเล่นเสียงแล้วส่งคำสั่ง
 def play_sound_and_send(command):
@@ -136,13 +159,30 @@ def record_data():
     if not recording:
         return
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    machine_status = telnet_send("STATUS")
-    qsdelay = telnet_send("QSDELAY ?")
-    internal_temp = telnet_send("LTEMF ?")
+
+    # ส่งคำสั่งและบันทึกค่าที่กลับมาในตัวแปร
+    tn.write(b"STATUS ?\r\n")
+    response = tn.read_until(b"\r ", timeout=1)
+    machine_status = response.decode("utf-8").strip()
+
+    tn.write(b"QSDELAY ?\r\n")
+    response = tn.read_until(b"\r ", timeout=1)
+    qsdelay = response.decode("utf-8").strip()
+
+    tn.write(b"LTEMF ?\r\n")
+    response = tn.read_until(b"\r ", timeout=1)
+    internal_temp = response.decode("utf-8").strip()
+
+    # บันทึกข้อมูลลงในไฟล์ CSV
     log_writer.writerow([timestamp, machine_status, qsdelay, internal_temp])
+
+    # แสดงผลบน terminal
     terminal.insert(tk.END, f"Recorded: {timestamp}, {machine_status}, {qsdelay}, {internal_temp}\n")
     terminal.see(tk.END)
+
+    # เรียกฟังก์ชันนี้อีกครั้งหลังจาก 5 วินาที
     root.after(5000, record_data)
+
 
 # Disconnect from Laser
 def telnet_disconnect():
@@ -296,3 +336,4 @@ root.update_idletasks()
 root.geometry(f"{root.winfo_width()}x{root.winfo_height()}")
 
 root.mainloop()
+
