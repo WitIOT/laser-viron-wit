@@ -69,7 +69,7 @@ def handle_client(client_socket):
                     status = "Laser Stop !"
                     response = f"{status}\n"
                 elif command.startswith("QSDELAY ?"):
-                    response = f"{qsdelay_value}\n"
+                    response = f" $QSDELAY {qsdelay_value}\n"
                 elif command.startswith("QSDELAY "):
                     try:
                         new_value = int(command.split()[1])
@@ -80,7 +80,7 @@ def handle_client(client_socket):
                 elif command.startswith("LTEMF ?"):
                     # Generate a random temperature between 15 and 30
                     random_temperature = random.randint(15, 30)
-                    response = f"{random_temperature}\n"
+                    response = f" $LTEMF {random_temperature}\n"
                 elif command.startswith("GWIPADDR ?"):
                     response = f"GWIPADDR is currently set to {network_settings['GWIPADDR']}.\n"
                 elif command.startswith("GWIPADDR "):

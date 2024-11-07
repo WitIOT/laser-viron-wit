@@ -1,0 +1,4 @@
+Timestamp,Machine Status,QSDELAY,Internal Temperature (°C)
+2024-11-05 11:07:50,Standby Now,$QSDELAY 220,$LTEMF 15
+2024-11-05 11:07:58,Laser Fire !,$QSDELAY 220,$LTEMF 15
+2024-11-05 11:08:06,Laser Fire !,$QSDELAY 220,$LTEMF 22

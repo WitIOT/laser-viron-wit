@@ -15,7 +15,8 @@ root.configure(bg='#B8BBBF')
 # กำหนดค่าการเชื่อมต่อ Telnet
 global telnet_ip
 telnet_ip = tk.StringVar()
-telnet_ip.set("10.49.234.235")  # กำหนดค่าเริ่มต้น IP Address
+# telnet_ip.set("10.49.234.235")  # กำหนดค่าเริ่มต้น IP Address
+telnet_ip.set("localhost")
 global telnet_port
 telnet_port = tk.StringVar()
 telnet_port.set("23")  # กำหนดค่าเริ่มต้น Port
@@ -26,6 +27,9 @@ telnet_user.set("VR70AB07")  # กำหนดค่าเริ่มต้น 
 # Variable to control sound and recording
 sound_on = True
 recording = False
+
+recording_enabled = tk.BooleanVar(value=True)
+
 
 # Directory for storing logs
 log_dir = "logs"
@@ -105,6 +109,9 @@ def telnet_send(command):
 
     terminal.insert(tk.END, current_time + ": " + received_data + '\n')
     terminal.see(tk.END)
+    
+    return received_data
+
 
 # ฟังก์ชันเล่นเสียงแล้วส่งคำสั่ง
 def play_sound_and_send(command):
@@ -133,6 +140,17 @@ def toggle_sound():
     sound_on = not sound_on
     mute_button.config(text="Unmute" if not sound_on else "Mute")
 
+def toggle_recording():
+    if recording_enabled.get():
+        recording_button.config(text="Disable Record")
+        recording_enabled.set(False)
+        stop_recording()
+    else:
+        recording_button.config(text="Enable Record")
+        recording_enabled.set(True)
+        start_recording()
+
+
 # ล้างหน้าจอ Terminal
 def terminal_clear():
     terminal.delete('1.0', tk.END)
@@ -140,12 +158,13 @@ def terminal_clear():
 # Start recording data to CSV
 def start_recording():
     global recording, log_file, log_writer
-    recording = True
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = open(os.path.join(log_dir, f"laser_{timestamp}.csv"), mode='w', newline='')
-    log_writer = csv.writer(log_file)
-    log_writer.writerow(["Timestamp", "Machine Status", "QSDELAY", "Internal Temperature (°C)"])
-    record_data()
+    if recording_enabled.get() and not recording:  # Ensure recording starts only if enabled
+        recording = True
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file = open(os.path.join(log_dir, f"laser_{timestamp}.csv"), mode='w', newline='')
+        log_writer = csv.writer(log_file)
+        log_writer.writerow(["Timestamp", "Machine Status", "QSDELAY", "Internal Temperature (°C)"])
+        record_data()
 
 # Stop recording data to CSV
 def stop_recording():
@@ -157,32 +176,26 @@ def stop_recording():
 
 # Record data every 5 seconds
 def record_data():
-    if not recording:
-        return
+    if not recording or not recording_enabled.get():
+        return  # Stop recording if the recording flag or recording_enabled is False
+
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # ส่งคำสั่งและบันทึกค่าที่กลับมาในตัวแปร
-    tn.write(b"STATUS ?\r\n")
-    response = tn.read_until(b"\r ", timeout=1)
-    machine_status = response.decode("utf-8").strip()
+    # Send command and retrieve responses from telnet_send()
+    machine_status = telnet_send("STATUS ?")
+    qsdelay = telnet_send("QSDELAY ?")
+    internal_temp = telnet_send("LTEMF ?")
 
-    tn.write(b"QSDELAY ?\r\n")
-    response = tn.read_until(b"\r ", timeout=1)
-    qsdelay = response.decode("utf-8").strip()
-
-    tn.write(b"LTEMF ?\r\n")
-    response = tn.read_until(b"\r ", timeout=1)
-    internal_temp = response.decode("utf-8").strip()
-
-    # บันทึกข้อมูลลงในไฟล์ CSV
+    # Write data to CSV
     log_writer.writerow([timestamp, machine_status, qsdelay, internal_temp])
 
-    # แสดงผลบน terminal
+    # Display recorded data in the terminal
     terminal.insert(tk.END, f"Recorded: {timestamp}, {machine_status}, {qsdelay}, {internal_temp}\n")
     terminal.see(tk.END)
 
-    # เรียกฟังก์ชันนี้อีกครั้งหลังจาก 5 วินาที
+    # Schedule the next recording if recording is still enabled
     root.after(5000, record_data)
+
 
 # Disconnect from Laser
 def telnet_disconnect():
@@ -276,6 +289,9 @@ fire_bt.grid(row=1, column=0, padx=5, pady=0, sticky='w')
 
 mute_button = tk.Button(control_frame, text="Mute", command=toggle_sound, width=11, height=2, font=("Arial", 11, 'bold'), fg='white', bg='#193A76')
 mute_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
+
+recording_button = tk.Button(control_frame, text="Enable Record", command=toggle_recording, width=11, height=2, font=("Arial", 11, 'bold'), fg='white', bg='#193A76')
+recording_button.grid(row=2, column=1, padx=5, pady=5, sticky='w')  # Position next to Mute button using grid
 
 standby_bt = tk.Button(control_frame, text="Standby", command=play_standby_and_send, width=11, height=2, font=("Arial", 11, 'bold'), fg='white', bg='#193A76')
 standby_bt.grid(row=1, column=1, padx=5, pady=0, sticky='w')
