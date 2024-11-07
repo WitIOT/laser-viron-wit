@@ -14,7 +14,7 @@ This application is designed to control a Laser VIRON system using a graphical u
 
 ## Requirements
 
-- Python 3.x
+- Python 3.12
 - Tkinter
 - Telnetlib
 - Playsound
