@@ -1,74 +1,56 @@
-# Laser VIRON (Version 2.3)
 
-## Overview
+# Laser Project - VIRON (Version 2.5 with Sound)
 
-This application is designed to control a Laser VIRON system using a graphical user interface (GUI) built with Tkinter. It enables users to connect to the laser via Telnet, send commands, and record operational data.
+This project is focused on controlling and recording data from a laser system using the `laser-custom-3.py` script. The software includes a graphical interface that allows toggling data recording, handling laser trigger signals, and processing signals from a PMT detector.
 
 ## Features
 
-- **Telnet Connection**: Connect to the laser using IP and port configuration.
-- **Command Execution**: Send various commands to control the laser operations.
-- **Data Logging**: Record laser data and operational logs.
-- **Temperature Monitoring**: Monitor the internal and diode temperatures of the laser.
-- **Sound Alerts**: Play sound alerts for specific operations.
+- **Laser Trigger and Detection**: Interfaces with a laser that shoots into the atmosphere, with trigger signals sent to an oscilloscope on channel 1 and a PMT detector reading on channel 2.
+- **Data Recording Toggle**: Allows users to toggle data recording to a CSV file with a setting button next to the Mute button in the interface.
+  - Displays "Enable Record" when data recording is on and "Disable Record" when off.
+  - Default status is set to `False` (recording disabled).
+- **Telnet Command Interface**: Supports Telnet commands for laser configuration, with commands formatted as `$COMMAND`, e.g., `MANUAL`, `DFREQ`, `QSDELAY`, etc.
+- **Wi-Fi Configuration**: Prioritizes connecting to Wi-Fi SSID 'T480' on startup, with AP mode (which creates 'iriv' hotspot) disabled on boot.
 
 ## Requirements
 
-- Python 3.12
-- Tkinter
-- Telnetlib
-- Playsound
-- Threading
-- CSV
-- Time
-- OS
+- **Python Version**: Python 3.12.7
+- **Dependencies**: Required Python libraries are listed in `requirements.txt`.
+  - Common dependencies might include libraries for Telnet communication, GUI management, and data handling.
 
 ## Installation
 
-1. Clone the repository or download the `laser-custom-2.py` file.
-2. Install the required Python packages:
-
-    ```bash
-    pip install tkinter playsound
-    ```
-
-3. Run the script:
-
-    ```bash
-    python laser-custom-2.py
-    ```
+1. Clone this repository:
+   ```bash
+   git clone [your-repo-url]
+   cd your-repo-directory
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Usage
 
-1. **Set Telnet Connection**: Configure the IP address and port for the Telnet connection in the UI.
-2. **Connect to Laser**: Click the "Login" button to establish the Telnet connection.
-3. **Send Commands**: Use the provided buttons to send pre-defined commands or enter custom commands manually.
-4. **Monitor Temperature**: Use the temperature buttons to check the internal and diode temperatures of the laser.
-5. **Start/Stop Recording**: Use the "Record" button to start recording laser data and "Stop" button to stop recording.
+1. Run the main script:
+   ```bash
+   python laser-custom-3.py
+   ```
+2. **GUI Options**:
+   - **Enable/Disable Recording**: Use the "Enable Record" button to start/stop recording data to a CSV file.
+   - **Mute/Unmute**: Toggle sound output using the Mute button.
+3. **Telnet Commands**: Configure laser settings using Telnet commands directly from the interface.
 
-## GUI Components
+## Configuration
 
-- **Connection Settings**: Input fields for IP address, port, and user login.
-- **Terminal**: Display the Telnet connection status and received responses.
-- **Control Panel**: Buttons for starting, stopping, and resetting the laser, along with emergency stop and recording controls.
-- **Temperature Monitoring**: Buttons to fetch internal and diode temperatures.
-- **Command Execution**: Input field for manual command entry and a button to send the command.
-- **Warning Label**: Displays a warning message regarding potential bugs.
+- **Wi-Fi Priority**: To ensure connection to the 'T480' network, configure Wi-Fi settings as needed.
+- **Telnet Parameters**: Customize Telnet commands and response handling in the `telnet_send` function, which manages command sequences and logs responses.
 
-## Directory Structure
+## Troubleshooting
 
-- **logs/**: Directory to store the log files.
-
-## Notes
-
-- Ensure the IP address and port are correctly configured to match the laser system.
-- Use the laser with caution as the software may have bugs.
-- Logs are saved in the `logs` directory with timestamps for reference.
-
-## Contributing
-
-If you encounter any issues or have suggestions for improvements, feel free to open an issue or submit a pull request.
-
+- **Connection Issues**: Verify network settings if you face issues connecting to the laser system via Telnet.
+- **Data Output**: Ensure correct CSV formatting by checking the data recording toggle and command responses.
+  
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under [Your License].
